@@ -4,10 +4,10 @@ A runnable demo of a chatbot that extracts structured information from
 conversation into a graph (Neo4j or in-memory) and uses a deterministic
 coverage checklist to decide which ontology field to ask about next.
 
-This is a **placebo** demo: the ontology fields (`placeholder_a/b/c`) and all
-prompt content are inert placeholders, not real clinical content. The point
-is the architecture: `schema`, `graph`, and `extract` are swappable behind
-the contract in `interfaces.py`.
+This is a **placebo** demo: the ontology fields (`name`, `emotion`,
+`placeholder_a/b/c`) and all prompt content are inert placeholders, not real
+clinical content. The point is the architecture: `schema`, `graph`, and
+`extract` are swappable behind the contract in `interfaces.py`.
 
 ## Architecture
 
@@ -16,11 +16,15 @@ the contract in `interfaces.py`.
 - `schema.py` -- `PlaceboSchema` (swappable; real ontology drops in here).
 - `graph.py` -- `InMemoryGraphStore` (no DB) and `Neo4jGraphStore` (default
   prod backend; all Cypher lives here).
-- `extract.py` -- `StubExtractor` (offline regex) and `LocalLLMExtractor`
-  (Ollama, JSON-constrained).
+- `extract.py` -- `StubExtractor` (offline `key: value` regex) and
+  `LocalLLMExtractor` (local Ollama model; extracts values from natural
+  conversational phrasing, not just literal `key: value` syntax, via
+  Ollama's native `/api/generate` with JSON-constrained output).
 - `generate.py` -- `EchoGenerator` (offline stub), `OpenRouterGenerator`
-  (Claude via OpenRouter), and `LocalLLMGenerator` (local OpenAI-compatible
-  server, e.g. Ollama).
+  (Claude via OpenRouter), and `LocalLLMGenerator` (local Ollama model via
+  its native `/api/chat` endpoint -- not the OpenAI-compatible `/v1` one,
+  since thinking models like `qwen3.5` only reliably honor `"think": false`
+  on the native API).
 - `factory.py` -- the only file that imports the concretes above; env vars
   select which implementation is wired in.
 - `prompts.py` -- placebo prompt templates with a `{ontology_schema}` slot.
@@ -66,12 +70,19 @@ api:app --reload` as above.
 ## Run with local LLM extraction / generation, or OpenRouter generation
 
 ```bash
-EXTRACTOR=local OLLAMA_MODEL=llama3                     # requires a running Ollama
-GENERATOR=openrouter OPENROUTER_API_KEY=...             # requires an OpenRouter key
-GENERATOR=local LOCAL_LLM_MODEL=llama3 \
-  LOCAL_LLM_BASE_URL=http://localhost:11434/v1          # requires a running Ollama
-                                                          # (or any OpenAI-compatible server)
+EXTRACTOR=local OLLAMA_MODEL=qwen3.5:9b                  # requires a running Ollama
+  OLLAMA_HOST=http://localhost:11434
+
+GENERATOR=openrouter OPENROUTER_API_KEY=...               # requires an OpenRouter key
+
+GENERATOR=local LOCAL_LLM_MODEL=qwen3.5:9b \
+  LOCAL_LLM_BASE_URL=http://localhost:11434/v1            # requires a running Ollama
+                                                            # (native API only -- not
+                                                            # LM Studio or other generic
+                                                            # OpenAI-compatible servers)
 ```
+
+Pull the model first if you haven't: `ollama pull qwen3.5:9b`.
 
 ## Tests
 
