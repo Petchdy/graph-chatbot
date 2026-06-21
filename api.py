@@ -6,12 +6,14 @@ from pydantic import BaseModel
 import factory
 from orchestrator import Session, turn
 
-app = FastAPI(title="Therapist Chatbot Demo")
+app = FastAPI(title="CACTUS CBT Chatbot")
 
 _sessions: dict[str, Session] = {}
 
+_SESSION_KEYS = {"session_phase", "active_technique"}
 
-def _get_or_create_session(session_id: str) -> Session:
+
+def _get_or_create(session_id: str) -> Session:
     if session_id not in _sessions:
         schema = factory.make_schema()
         _sessions[session_id] = Session(
@@ -30,6 +32,8 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    technique: str = ""
+    phase: str = ""
     deltas: dict[str, str]
     slots: dict
 
@@ -40,7 +44,7 @@ class ResetRequest(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    session = _get_or_create_session(request.session_id)
+    session = _get_or_create(request.session_id)
     result = turn(session, request.message)
     return ChatResponse(**result)
 
@@ -55,12 +59,38 @@ def reset(request: ResetRequest) -> dict:
     return {"ok": True}
 
 
-import gradio as gr  # noqa: E402  (mounted after routes are defined)
+@app.get("/graph/{session_id}")
+def get_graph(session_id: str) -> dict:
+    """Cytoscape-compatible node/edge JSON for the session's slot-fill graph."""
+    if session_id not in _sessions:
+        return {"nodes": [], "edges": []}
+
+    snapshot = _sessions[session_id].graph.snapshot()
+    nodes = [{"data": {"id": "session", "label": "Session", "type": "session"}}]
+    edges = []
+
+    for key, entry in snapshot.items():
+        if key in _SESSION_KEYS:
+            ntype = "session_state"
+        elif entry["acquired"]:
+            ntype = "field"
+        else:
+            ntype = "missing"
+
+        label = f"{key}\n{str(entry['value'])[:25]}" if entry["acquired"] else key
+        nodes.append({"data": {"id": f"f_{key}", "label": label, "type": ntype}})
+        edges.append({
+            "data": {
+                "source": "session",
+                "target": f"f_{key}",
+                "label": "HAS" if entry["acquired"] else "MISSING",
+            }
+        })
+
+    return {"nodes": nodes, "edges": edges}
+
+
+import gradio as gr  # noqa: E402
 import ui  # noqa: E402
 
-app = gr.mount_gradio_app(
-    app,
-    ui.demo,
-    path="/",
-    theme=gr.themes.Default(primary_hue="blue", neutral_hue="slate"),
-)
+app = gr.mount_gradio_app(app, ui.demo, path="/")
