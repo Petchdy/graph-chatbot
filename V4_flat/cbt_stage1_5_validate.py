@@ -22,11 +22,11 @@ import sys
 from langchain_ollama import ChatOllama
 from tqdm import tqdm
 
-from cbt_ontology_v4_flat import (Turn, Node, CLASS_DEFINITIONS,
-                                  turn_texts, render_turns)
+from cbt_ontology_v4_flat import (Turn, Node, CLASS_DEFINITIONS, SUBCLASSED,
+                                  SUBCLASS_GLOSS, SUBCLASS_RULES, turn_texts, render_turns)
 
 OLLAMA_TIMEOUT = 900  # 15-minute timeout per LLM call
-BATCH = 6
+BATCH = 1
 _JSON_REMINDER = "\n\nOutput ONLY a JSON array starting with [ and ending with ]."
 
 
@@ -117,8 +117,59 @@ def validate_nodes(by_label: dict[str, list[Node]], turns: list[Turn],
     return kept, dropped
 
 
+# ---------------------------------------------------------------------------
+# (b) subclass classification — sets group_key (partition key)
+# ---------------------------------------------------------------------------
+
+_SUBCLASS_PROMPT = """You assign each CBT entity to exactly one subclass of {family}.
+Entity texts/evidence are in Thai.
+
+SUBCLASSES:
+{gloss}
+
+{candidates}
+
+Return one object per candidate:
+[{{"item": 1, "subclass": "<one value>"}}, ...].{reminder}"""
+
+
+def classify_subclasses(by_label: dict[str, list[Node]], turns: list[Turn],
+                        llm: ChatOllama | None = None) -> None:
+    """Mutates Node.group_key in place for the 4 subclassed families."""
+    llm = llm or _llm()
+    for family in SUBCLASSED:
+        nodes = by_label.get(family, [])
+        if not nodes:
+            continue
+        gloss = "\n".join(f"  - {k}: {v}" for k, v in SUBCLASS_GLOSS[family].items())
+        valid = set(SUBCLASS_RULES[family])
+        for start in tqdm(range(0, len(nodes), BATCH),
+                          desc=f"stage1.5 subclass {family}"):
+            batch = nodes[start:start + BATCH]
+            blocks = [f"CANDIDATE {i}: '{n.text}'\nEVIDENCE:\n{_evidence(n, turns)}"
+                      for i, n in enumerate(batch, 1)]
+            prompt = _SUBCLASS_PROMPT.format(family=family, gloss=gloss,
+                                             candidates="\n\n".join(blocks),
+                                             reminder=_JSON_REMINDER)
+            for it in _parse(llm.invoke("/no_think\n" + prompt).content):
+                if not isinstance(it, dict):
+                    continue
+                idx, sub = it.get("item"), str(it.get("subclass", "")).strip()
+                if isinstance(idx, int) and 1 <= idx <= len(batch) and sub in valid:
+                    batch[idx - 1].group_key = sub
+        # nodes that stayed unclassified: fall back to the catch-all where one exists
+        for n in nodes:
+            if n.group_key not in valid:
+                fallback = "other" if "other" in valid else None
+                if fallback:
+                    n.group_key = fallback
+                    print(f"[stage1.5] {family} '{n.text[:40]}' unclassified -> {fallback}",
+                          file=sys.stderr)
+
+
 def run_stage1_5(by_label: dict[str, list[Node]], turns: list[Turn],
                  llm: ChatOllama | None = None) -> tuple[dict[str, list[Node]], list[dict]]:
-    """Validate-only: keep/drop against class definition. No subclass classification."""
     llm = llm or _llm()
-    return validate_nodes(by_label, turns, llm)
+    kept, dropped = validate_nodes(by_label, turns, llm)
+    classify_subclasses(kept, turns, llm)
+    return kept, dropped

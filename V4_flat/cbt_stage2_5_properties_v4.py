@@ -41,7 +41,7 @@ from tqdm import tqdm
 from cbt_ontology_v4_flat import (Turn, Node, DISTORTION_TYPES, TECHNIQUES, SITUATION_KINDS,
                                   SELF_CB_CATEGORIES, HOMEWORK_TASKTYPES, SUBCLASS_GLOSS,
                                   emotion_valence_from_text, temporality_from_text,
-                                  turn_texts, render_turns)
+                                  turn_texts, render_turns, GROUP_KEY_PROP)
 
 OLLAMA_TIMEOUT = 900  # 15-minute timeout per LLM call
 BATCH = 6
@@ -123,27 +123,23 @@ def _classify_isoptional(nodes: list[Node], turns: list[Turn], llm: ChatOllama) 
             n.props.setdefault("isOptional", False)
 
 
+def assign_group_key_to_props(survivors: dict[str, list[Node]]) -> None:
+    """Copies group_key (populated in Stage 1.5) into the flat property."""
+    for label, nodes in survivors.items():
+        prop_name = GROUP_KEY_PROP.get(label)
+        if not prop_name:
+            continue
+        for n in nodes:
+            if n.group_key:
+                n.props[prop_name] = n.group_key
+
+
 def run_stage2_5(survivors: dict[str, list[Node]], turns: list[Turn],
                  llm: ChatOllama | None = None) -> None:
     llm = llm or _llm()
 
-    # ── discriminators ── must run FIRST so category/valence can gate on them.
-    _classify(survivors.get("Problem", []), turns, llm,
-              "Pick the domain that best fits each problem.",
-              SUBCLASS_GLOSS["Problem"], "domain",
-              desc="stage2.5 Problem.domain")
-    _classify(survivors.get("CoreBelief", []), turns, llm,
-              "Pick the domain that best fits each core belief.",
-              SUBCLASS_GLOSS["CoreBelief"], "domain",
-              desc="stage2.5 CoreBelief.domain")
-    _classify(survivors.get("IntermediateBelief", []), turns, llm,
-              "Pick the subtype that best fits each intermediate belief.",
-              SUBCLASS_GLOSS["IntermediateBelief"], "subtype",
-              desc="stage2.5 IntermediateBelief.subtype")
-    _classify(survivors.get("Reaction", []), turns, llm,
-              "Pick the channel that best fits each reaction.",
-              SUBCLASS_GLOSS["Reaction"], "channel",
-              desc="stage2.5 Reaction.channel")
+    # ── copy group_key to properties ── must run FIRST so category/valence can gate on them.
+    assign_group_key_to_props(survivors)
 
     ats = survivors.get("AutomaticThought", [])
     _classify(ats, turns, llm,
