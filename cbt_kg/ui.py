@@ -587,7 +587,7 @@ function showNodePanel(n) {
       '</select></div>';
     const propStr = Object.keys(n.props || {}).length > 0 ? JSON.stringify(n.props, null, 1) : '';
     fields += '<div class="dp-field"><label>Properties (JSON)</label>' +
-      '<textarea id="dpProps" placeholder=\'{"content":"…"}\'>' + esc(propStr) + '</textarea></div>';
+      '<textarea id="dpProps" placeholder="{&quot;content&quot;:&quot;...&quot;}">' + esc(propStr) + '</textarea></div>';
   } else {
     // Read-only
     fields += '<div class="dp-field"><label>Node ID</label><input value="' + esc(n.id) + '" readonly /></div>';
@@ -600,8 +600,8 @@ function showNodePanel(n) {
   fields += '<div class="dp-field"><label>Evidence turns</label><input value="' + esc(evidTurns) + '" readonly /></div>';
 
   renderDP(fields,
-    '<button class="save" onclick="saveNode(\'' + n.id + '\')">Save</button>' +
-    '<button class="del" onclick="deleteNode(\'' + n.id + '\')">Delete</button>'
+    '<button class="save" onclick="saveNode(&quot;' + esc(n.id) + '&quot;)">Save</button>' +
+    '<button class="del" onclick="deleteNode(&quot;' + esc(n.id) + '&quot;)">Delete</button>'
   );
 }
 
@@ -634,8 +634,8 @@ function showEdgePanel(e) {
   fields += '<div class="dp-field"><label>Evidence turns</label><input value="' + esc(evid) + '" readonly /></div>';
 
   renderDP(fields,
-    '<button class="save" onclick="saveEdge(\'' + e.id + '\')">Save</button>' +
-    '<button class="del" onclick="deleteEdge(\'' + e.id + '\')">Delete</button>'
+    '<button class="save" onclick="saveEdge(&quot;' + esc(e.id) + '&quot;)">Save</button>' +
+    '<button class="del" onclick="deleteEdge(&quot;' + esc(e.id) + '&quot;)">Delete</button>'
   );
 }
 
@@ -693,7 +693,7 @@ function showCreateEdge(fromId, toId) {
     '</select></div>' +
     '<div class="modal-actions">' +
     '<button onclick="closeModal()">Cancel</button>' +
-    '<button class="confirm" onclick="confirmEdge(\'' + fromId + '\',\'' + toId + '\')">Add</button>' +
+    '<button class="confirm" onclick="confirmEdge(&quot;' + esc(fromId) + '&quot;,&quot;' + esc(toId) + '&quot;)">Add</button>' +
     '</div>';
   m.style.display = 'flex';
 }
