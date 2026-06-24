@@ -1,5 +1,22 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT Live Session</title>
 <style>
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f9fafb;
+    --color-background-tertiary: #f3f4f6;
+    --color-border-secondary: #e5e7eb;
+    --color-border-tertiary: #d1d5db;
+    --color-text-primary: #111827;
+    --color-text-secondary: #4b5563;
+    --color-text-tertiary: #9ca3af;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--font-sans); font-size: 14px; background: var(--color-background-tertiary); }
 
@@ -51,8 +68,11 @@
   .legend-dot.missing { background: #dee2e6; border: 1px dashed #aaa; }
   .legend-line { width: 16px; height: 2px; background: #1D9E75; flex-shrink: 0; }
   .legend-line.dashed { background: repeating-linear-gradient(90deg,#bbb 0,#bbb 3px,transparent 3px,transparent 6px); }
+  
+  canvas { position: absolute; top: 0; left: 0; cursor: pointer; }
 </style>
-
+</head>
+<body>
 <div class="app-shell">
   <div class="tab-bar">
     <div class="tab active">Therapy — Part 1</div>
@@ -95,95 +115,14 @@
       </div>
     </div>
 
-    <div class="graph-panel">
+    <div class="graph-panel" id="gp">
       <div class="graph-header">
         <span class="graph-title">Knowledge graph — live</span>
         <span class="graph-status"><span class="live-dot"></span>Updated 2s ago · 9 nodes</span>
       </div>
 
       <div class="graph-canvas">
-        <svg viewBox="0 0 520 420" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-sans)">
-          <defs>
-            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L0,6 L8,3 z" fill="#1D9E75"/>
-            </marker>
-            <marker id="arr-miss" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L0,6 L8,3 z" fill="#bbb"/>
-            </marker>
-          </defs>
-
-          <!-- Missing placeholder nodes (grey, dashed) -->
-          <circle cx="80" cy="100" r="28" fill="#f5f5f5" stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="80" y="97" text-anchor="middle" font-size="9" fill="#999">Homework</text>
-          <text x="80" y="108" text-anchor="middle" font-size="8" fill="#bbb">missing</text>
-
-          <circle cx="80" cy="200" r="28" fill="#f5f5f5" stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="80" y="197" text-anchor="middle" font-size="9" fill="#999">Intervention</text>
-          <text x="80" y="208" text-anchor="middle" font-size="8" fill="#bbb">missing</text>
-
-          <circle cx="80" cy="300" r="28" fill="#f5f5f5" stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="80" y="297" text-anchor="middle" font-size="9" fill="#999">Utterance</text>
-          <text x="80" y="308" text-anchor="middle" font-size="8" fill="#bbb">missing</text>
-
-          <!-- Session structure (green) -->
-          <circle cx="200" cy="60" r="30" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.5"/>
-          <text x="200" y="57" text-anchor="middle" font-size="9" font-weight="500" fill="#085041">Client</text>
-
-          <circle cx="200" cy="150" r="30" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.5"/>
-          <text x="200" y="147" text-anchor="middle" font-size="9" font-weight="500" fill="#085041">Session</text>
-
-          <!-- hasSession arrow -->
-          <line x1="200" y1="90" x2="200" y2="120" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arr)"/>
-          <text x="210" y="109" font-size="8" fill="#1D9E75">hasSession</text>
-
-          <!-- Session structure nodes (blue) -->
-          <rect x="140" y="220" width="62" height="38" rx="6" fill="#E6F1FB" stroke="#378ADD" stroke-width="1.5"/>
-          <text x="171" y="237" text-anchor="middle" font-size="9" font-weight="500" fill="#0C447C">Problem</text>
-          <text x="171" y="249" text-anchor="middle" font-size="8" fill="#185FA5">no family</text>
-
-          <rect x="240" y="220" width="62" height="38" rx="6" fill="#E6F1FB" stroke="#378ADD" stroke-width="1.5"/>
-          <text x="271" y="237" text-anchor="middle" font-size="9" font-weight="500" fill="#0C447C">Goal</text>
-          <text x="271" y="249" text-anchor="middle" font-size="8" fill="#185FA5">good sleep</text>
-
-          <!-- Session → Problem, Goal -->
-          <line x1="200" y1="180" x2="171" y2="220" stroke="#378ADD" stroke-width="1.2" marker-end="url(#arr)"/>
-          <line x1="200" y1="180" x2="271" y2="220" stroke="#378ADD" stroke-width="1.2" marker-end="url(#arr)"/>
-
-          <!-- Cognitive chain (purple) -->
-          <circle cx="310" cy="105" r="34" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
-          <text x="310" y="100" text-anchor="middle" font-size="9" font-weight="500" fill="#3C3489">CoreBelief</text>
-          <text x="310" y="113" text-anchor="middle" font-size="8" fill="#534AB7">I am unlovable</text>
-
-          <circle cx="410" cy="160" r="34" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
-          <text x="410" y="153" text-anchor="middle" font-size="9" font-weight="500" fill="#3C3489">AutomaticThought</text>
-          <text x="410" y="166" text-anchor="middle" font-size="8" fill="#534AB7">no way forward</text>
-
-          <circle cx="440" cy="270" r="30" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
-          <text x="440" y="265" text-anchor="middle" font-size="9" font-weight="500" fill="#3C3489">Situation</text>
-          <text x="440" y="278" text-anchor="middle" font-size="8" fill="#534AB7">living alone</text>
-
-          <circle cx="350" cy="340" r="30" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
-          <text x="350" y="335" text-anchor="middle" font-size="9" font-weight="500" fill="#3C3489">Reaction</text>
-          <text x="350" y="348" text-anchor="middle" font-size="8" fill="#534AB7">anxious</text>
-
-          <circle cx="200" cy="340" r="34" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
-          <text x="200" y="335" text-anchor="middle" font-size="9" font-weight="500" fill="#3C3489">CoreBelief</text>
-          <text x="200" y="348" text-anchor="middle" font-size="8" fill="#534AB7">unworthy of love</text>
-
-          <!-- Cognitive edges -->
-          <path d="M310,139 Q355,140 376,143" stroke="#7F77DD" stroke-width="1.3" fill="none" marker-end="url(#arr)"/>
-          <text x="336" y="134" font-size="8" fill="#7F77DD">stemsFrom</text>
-
-          <path d="M415,194 Q430,225 440,240" stroke="#7F77DD" stroke-width="1.3" fill="none" marker-end="url(#arr)"/>
-          <text x="444" y="225" font-size="8" fill="#7F77DD">triggers</text>
-
-          <path d="M416,193 Q400,255 375,315" stroke="#7F77DD" stroke-width="1.3" fill="none" marker-end="url(#arr)"/>
-          <text x="386" y="257" font-size="8" fill="#7F77DD">leadsTo</text>
-
-          <!-- Problem → manifestsAs → Situation -->
-          <path d="M200,258 Q310,250 410,240" stroke="#378ADD" stroke-width="1.2" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
-          <text x="295" y="242" font-size="8" fill="#378ADD">manifestsAs</text>
-        </svg>
+        <canvas id="gc"></canvas>
       </div>
 
       <div class="legend">
@@ -197,3 +136,205 @@
     </div>
   </div>
 </div>
+
+<script>
+const NODE_CLASSES = ["Problem","Goal","Intervention","Homework","CoreBelief","IntermediateBelief","Situation","AutomaticThought","Reaction","AdaptiveResponse","Client","Session"];
+const PREDICATES = ["triggers","leadsTo","stemsFrom","givesRiseTo","influencesPerceptionOf","manifestsAs","becomesSituation","reinforces","hasAdaptiveResponse","associatedWith","targetsProblem","targets","appliedTo","produces","hasSession","hasProblem","hasIntervention","hasHomework","evidencedBy","inSession"];
+
+const COLOR = {
+  Client:"#1D9E75", Session:"#1D9E75",
+  Problem:"#378ADD", Goal:"#378ADD",
+  CoreBelief:"#7F77DD", IntermediateBelief:"#7F77DD",
+  Situation:"#7F77DD", AutomaticThought:"#7F77DD",
+  Reaction:"#7F77DD", AdaptiveResponse:"#7F77DD",
+  Intervention:"#EF9F27", Homework:"#EF9F27",
+  missing:"#e0e0e0"
+};
+const BADGE_BG = {
+  Client:"#E1F5EE", Session:"#E1F5EE",
+  Problem:"#E6F1FB", Goal:"#E6F1FB",
+  CoreBelief:"#EEEDFE", IntermediateBelief:"#EEEDFE",
+  Situation:"#EEEDFE", AutomaticThought:"#EEEDFE",
+  Reaction:"#EEEDFE", AdaptiveResponse:"#EEEDFE",
+  Intervention:"#FAEEDA", Homework:"#FAEEDA",
+};
+const BADGE_COLOR = {
+  Client:"#0F6E56", Session:"#0F6E56",
+  Problem:"#185FA5", Goal:"#185FA5",
+  CoreBelief:"#3C3489", IntermediateBelief:"#3C3489",
+  Situation:"#3C3489", AutomaticThought:"#3C3489",
+  Reaction:"#3C3489", AdaptiveResponse:"#3C3489",
+  Intervention:"#633806", Homework:"#633806",
+};
+
+let nodes = [
+  {id:"client", label:"Client", x:260, y:55, status:"found", props:{} },
+  {id:"session", label:"Session", x:260, y:145, status:"found", props:{sessionType:"therapy"} },
+  {id:"prob1", label:"Problem", x:160, y:240, status:"found", props:{description:"no family, loving partner", domain:"social"} },
+  {id:"goal1", label:"Goal", x:360, y:240, status:"found", props:{statement:"have a good sleep"} },
+  {id:"cb1", label:"CoreBelief", x:180, y:340, status:"found", props:{content:"I am unlovable", domain:"self", category:"unlovable"} },
+  {id:"at1", label:"AutomaticThought", x:340, y:320, status:"found", props:{content:"there is no way forward", modality:"verbal", distortionType:"catastrophizing"} },
+  {id:"sit1", label:"Situation", x:420, y:220, status:"found", props:{description:"living alone with my loneliness", kind:"externalSituation"} },
+  {id:"react1", label:"Reaction", x:420, y:380, status:"found", props:{content:"anxious", channel:"emotional", valence:"negative"} },
+  {id:"hw1", label:"Homework", x:100, y:145, status:"missing", props:{} },
+];
+let edges = [
+  {id:"e1", from:"client", to:"session", predicate:"hasSession", status:"found"},
+  {id:"e2", from:"session", to:"prob1", predicate:"hasProblem", status:"found"},
+  {id:"e3", from:"session", to:"goal1", predicate:"hasSession", status:"found"},
+  {id:"e4", from:"cb1", to:"at1", predicate:"stemsFrom", status:"found"},
+  {id:"e5", from:"at1", to:"sit1", predicate:"triggers", status:"found"},
+  {id:"e6", from:"at1", to:"react1", predicate:"leadsTo", status:"found"},
+  {id:"e7", from:"prob1", to:"sit1", predicate:"manifestsAs", status:"placeholder"},
+];
+
+let selected = null;
+let edgeMode = false;
+let edgeFrom = null;
+let dpr = window.devicePixelRatio || 1;
+
+const gp = document.getElementById('gp');
+const cv = document.getElementById('gc');
+const ctx2 = cv.getContext('2d');
+
+function resize() {
+  const rect = gp.querySelector('.graph-canvas').getBoundingClientRect();
+  cv.style.width = rect.width + 'px';
+  cv.style.height = rect.height + 'px';
+  cv.width = rect.width * dpr;
+  cv.height = rect.height * dpr;
+  ctx2.scale(dpr, dpr);
+  draw();
+}
+
+function nodeAt(x, y) {
+  return nodes.find(n => Math.hypot(n.x - x, n.y - y) < 26);
+}
+
+function edgeAt(x, y) {
+  for (const e of edges) {
+    const a = nodes.find(n=>n.id===e.from), b = nodes.find(n=>n.id===e.to);
+    if (!a||!b) continue;
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    if (Math.hypot(mx-x, my-y) < 14) return e;
+  }
+  return null;
+}
+
+function draw() {
+  const W = cv.width/dpr, H = cv.height/dpr;
+  ctx2.clearRect(0,0,W,H);
+
+  for (const e of edges) {
+    const a = nodes.find(n=>n.id===e.from), b = nodes.find(n=>n.id===e.to);
+    if (!a||!b) continue;
+    const sel = selected && selected.type==='edge' && selected.id===e.id;
+    ctx2.save();
+    ctx2.strokeStyle = sel ? '#D85A30' : (e.status==='found' ? '#1D9E75' : '#bbb');
+    ctx2.lineWidth = sel ? 2.2 : 1.4;
+    if (e.status==='placeholder') ctx2.setLineDash([5,3]);
+    ctx2.beginPath();
+    const dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy);
+    const ux=dx/dist, uy=dy/dist;
+    const sx=a.x+ux*26, sy=a.y+uy*26, ex=b.x-ux*28, ey=b.y-uy*28;
+    ctx2.moveTo(sx,sy); ctx2.lineTo(ex,ey);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+    // arrow
+    const ang = Math.atan2(ey-sy, ex-sx);
+    ctx2.fillStyle = sel ? '#D85A30' : (e.status==='found' ? '#1D9E75' : '#bbb');
+    ctx2.beginPath();
+    ctx2.moveTo(ex,ey);
+    ctx2.lineTo(ex-9*Math.cos(ang-0.4), ey-9*Math.sin(ang-0.4));
+    ctx2.lineTo(ex-9*Math.cos(ang+0.4), ey-9*Math.sin(ang+0.4));
+    ctx2.closePath(); ctx2.fill();
+    // label at midpoint
+    const mx=(sx+ex)/2, my=(sy+ey)/2;
+    ctx2.font = '9px "Inter", sans-serif';
+    ctx2.fillStyle = sel ? '#D85A30' : (e.status==='found' ? '#0F6E56' : '#aaa');
+    ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    ctx2.fillText(e.predicate, mx, my-7);
+    ctx2.restore();
+  }
+
+  for (const n of nodes) {
+    const sel = selected && selected.type==='node' && selected.id===n.id;
+    const ef = edgeMode && edgeFrom === n.id;
+    ctx2.save();
+    const col = n.status==='missing' ? COLOR.missing : (COLOR[n.label]||'#aaa');
+    const isRect = n.label==='Problem'||n.label==='Goal';
+
+    if (sel || ef) {
+      ctx2.shadowColor = ef ? '#378ADD' : '#D85A30';
+      ctx2.shadowBlur = 10;
+    }
+
+    if (isRect) {
+      const rx=n.x-32, ry=n.y-22, rw=64, rh=44;
+      ctx2.fillStyle = n.status==='missing' ? '#f5f5f5' : (BADGE_BG[n.label]||'#eee');
+      ctx2.strokeStyle = sel ? '#D85A30' : col;
+      ctx2.lineWidth = sel ? 2.2 : 1.5;
+      if (n.status==='missing') ctx2.setLineDash([4,3]);
+      roundRect(ctx2, rx,ry,rw,rh,6); ctx2.fill(); ctx2.stroke();
+      ctx2.setLineDash([]);
+    } else {
+      ctx2.fillStyle = n.status==='missing' ? '#f5f5f5' : (BADGE_BG[n.label]||'#eee');
+      ctx2.strokeStyle = sel ? '#D85A30' : col;
+      ctx2.lineWidth = sel ? 2.2 : 1.5;
+      if (n.status==='missing') ctx2.setLineDash([4,3]);
+      ctx2.beginPath(); ctx2.arc(n.x, n.y, 26, 0, Math.PI*2); ctx2.fill(); ctx2.stroke();
+      ctx2.setLineDash([]);
+    }
+
+    ctx2.shadowBlur = 0;
+    const textCol = n.status==='missing' ? '#aaa' : (BADGE_COLOR[n.label]||'#333');
+    ctx2.fillStyle = textCol;
+    ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    ctx2.font = '9px "Inter", sans-serif';
+    const shortLabel = n.label.length > 12 ? n.label.slice(0,10)+'…' : n.label;
+    ctx2.fillText(shortLabel, n.x, n.y - 6);
+    const mainProp = Object.values(n.props||{})[0] || '';
+    const shortProp = mainProp.toString().slice(0,12) + (mainProp.toString().length>12?'…':'');
+    ctx2.font = '8px "Inter", sans-serif';
+    ctx2.fillStyle = n.status==='missing' ? '#ccc' : col;
+    ctx2.fillText(shortProp, n.x, n.y + 6);
+
+    ctx2.restore();
+  }
+}
+
+function roundRect(c, x,y,w,h,r) {
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.arcTo(x+w,y,x+w,y+r,r);
+  c.lineTo(x+w,y+h-r); c.arcTo(x+w,y+h,x+w-r,y+h,r);
+  c.lineTo(x+r,y+h); c.arcTo(x,y+h,x,y+h-r,r);
+  c.lineTo(x,y+r); c.arcTo(x,y,x+r,y,r);
+  c.closePath();
+}
+
+let drag=null, dragOff={x:0,y:0};
+
+cv.addEventListener('mousedown', e => {
+  const r = cv.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const n = nodeAt(mx,my);
+  if (n) { drag=n; dragOff={x:mx-n.x, y:my-n.y}; selected={type:'node', id:n.id}; draw(); return; }
+  const ed = edgeAt(mx,my);
+  if (ed) { selected={type:'edge', id:ed.id}; draw(); return; }
+  selected=null; draw();
+});
+
+cv.addEventListener('mousemove', e => {
+  if (!drag) return;
+  const r = cv.getBoundingClientRect();
+  drag.x = e.clientX - r.left - dragOff.x;
+  drag.y = e.clientY - r.top - dragOff.y;
+  draw();
+});
+cv.addEventListener('mouseup', () => { drag=null; });
+
+new ResizeObserver(resize).observe(gp);
+resize();
+</script>
+</body>
+</html>

@@ -349,7 +349,7 @@ function resize() {
   cv.width = w * dpr;
   cv.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  if (!layoutDone && nodes.length > 0) {
+  if (!layoutDone && nodes.length > 0 && w > 50 && h > 50) {
     applyLayout(w, h);
     layoutDone = true;
   }
